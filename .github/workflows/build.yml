@@ -23,17 +23,23 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: CycoAi  # Target organization with packages
+          repositories: cycodum-oauth2-client  # Explicitly request access to package repo
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
       
+      # Authenticate to GitHub Packages (CRITICAL STEP!)
+      - name: Authenticate to GitHub Packages
+        run: |
+          dotnet nuget update source CycoAi-GitHub \
+            --username github \
+            --password ${{ steps.app-token.outputs.token }} \
+            --store-password-in-clear-text
+      
       - name: Restore packages
         run: dotnet restore
-        env:
-          # Use GitHub App token for authentication
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
       
       - name: Build
         run: dotnet build --no-restore --configuration Release
